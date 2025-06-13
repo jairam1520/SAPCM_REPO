@@ -13,7 +13,7 @@ external recordExt{
 	ascii id:	terminated_by(",");
 	ascii city:	terminated_by(0xA);
 };
-
+//creating internal defination
 internal recordInt{
 	string name;
 	int id;
