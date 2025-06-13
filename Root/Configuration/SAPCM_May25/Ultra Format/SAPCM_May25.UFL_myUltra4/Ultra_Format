@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<exportmultiplex category="Ultra_Format" ref_path="ultra_format[Internal]/storable[ultra_format]/storable[Data]">
+   <string name="Definition"><![CDATA[//creating defination for header
+external headerExt{
+	ascii name: terminated_by(",");
+	ascii id:	terminated_by(",");
+	ascii city:	terminated_by(0xA);
+};
+
+//creating defination for records
+external recordExt{
+	ascii name: terminated_by(",");
+	ascii id:	terminated_by(",");
+	ascii city:	terminated_by(0xA);
+};
+
+internal recordInt{
+	string name;
+	int id;
+	string city;
+};
+
+//creating defination for tail
+external tailExt{
+	ascii tail : terminated_by(0xA);
+};
+
+in_map headIMap : external(headerExt),target_internal(header_TI),discard_output{automatic;};
+in_map recIMap : external(recordExt),internal(recordInt){automatic;};
+in_map tailIMap : external(tailExt),target_internal(tail_TI),discard_output{automatic;};
+
+decoder headDec : in_map(headIMap);
+decoder recDec : in_map(recIMap);
+decoder tailDec : in_map(tailIMap);
+
+decoder totalDec{
+	decoder headDec;
+	decoder recDec *;//it will allow zero or more records of this type
+	decoder tailDec;
+};]]></string>
+</exportmultiplex>
