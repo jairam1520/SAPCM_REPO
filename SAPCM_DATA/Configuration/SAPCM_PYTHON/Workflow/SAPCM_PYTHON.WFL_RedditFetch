@@ -1,0 +1,811 @@
+{
+  "Key": "DR1756398690832",
+  "Name": "WFL_RedditFetch",
+  "Type": "Workflow",
+  "Version": 27,
+  "Folder": "SAPCM_PYTHON",
+  "Owner": "mzadmin",
+  "Is Valid": true,
+  "Access Groups -read -write -execute": [
+    "Administrator",
+    "Administrator",
+    "Administrator"
+  ],
+  "Auxiliary Data": {
+    "Entries": [
+      {
+        "Key": "Type",
+        "Value": "Batch"
+      },
+      {
+        "Key": "Standalone",
+        "Value": "false"
+      },
+      {
+        "Key": "Count",
+        "Value": "1"
+      },
+      {
+        "Key": "Autostart",
+        "Value": "false"
+      },
+      {
+        "Key": "DynamicConfig",
+        "Value": "false"
+      }
+    ],
+    "$Version": 2.0
+  },
+  "Data": {
+    "auditLogOnCancelBatch": false,
+    "cancelBatchType": "Abort immediately",
+    "consecutiveCount": 0,
+    "dynamicInstances": false,
+    "errorMimNames": [],
+    "fieldTypes": [],
+    "instances": [
+      {
+        "cellValues": [],
+        "instanceId": 1,
+        "instanceName": "workflow_1",
+        "validType": "Valid",
+        "$Version": 1.0
+      }
+    ],
+    "isErrorBatchTypeECS": false,
+    "nodes": [
+      {
+        "Name": "Python_1",
+        "ID": -1465262374,
+        "Classname": "com.digitalroute.pythonagents.agent.PythonBatchCollectionAgentInsp",
+        "Configuration": [
+          {
+            "Type": 1,
+            "Classname": "com.digitalroute.pythonagents.agent.PythonBatchCollectionAgentInsp",
+            "Data": {
+              "outputTypes": [
+                {
+                  "udrTypeInfo": {
+                    "typeName": "bytearray",
+                    "$Version": 1.0
+                  },
+                  "$Version": 1.0
+                },
+                {
+                  "udrTypeInfo": {
+                    "typeName": "DRUDR",
+                    "$Version": 1.0
+                  },
+                  "$Version": 1.0
+                },
+                {
+                  "udrTypeInfo": {
+                    "TypeName": "SAPCM_PYTHON.UFL_Reddit.RedditPost",
+                    "FormatName": "SAPCM_PYTHON.UFL_Reddit",
+                    "$Type": "dr.UltraClientInfo",
+                    "$Version": 1.0
+                  },
+                  "$Version": 1.0
+                }
+              ],
+              "sourceCode": "import praw
+import time
+from ultra.SAPCM_PYTHON.UFL_Reddit import RedditPost, Comment
+
+reddit = praw.Reddit(
+    client_id=\"rXXIn0czRGHNP0wIfeZrBw\",
+    client_secret=\"g3VZS5Vt2WqJgbo6prnQwWX656augw\",
+    user_agent=\"script:reddit_fetch:v1.0 (by u/Jai)\"
+)
+
+# Global cache for user avatars
+user_cache = {}
+
+def build_comment_udr(reddit_comment):
+    \"\"\"Convert a PRAW comment into internal Comment UDR (single object, no replies).\"\"\"
+    cm_comment = udrCreate(Comment)
+    cm_comment.id = reddit_comment.id
+    cm_comment.text = reddit_comment.body
+    cm_comment.author = reddit_comment.author.name if reddit_comment.author else \"[deleted]\"
+    cm_comment.time = time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime(reddit_comment.created_utc))
+
+    # Votes
+    cm_comment.upvotes = getattr(reddit_comment, \"ups\", 0)
+    cm_comment.downvotes = getattr(reddit_comment, \"downs\", 0)
+    cm_comment.score = reddit_comment.score
+
+    # Profile picture
+    if reddit_comment.author:
+        author_name = reddit_comment.author.name
+        if author_name in user_cache:
+            cm_comment.profile_pic = user_cache[author_name]
+        else:
+            profile_pic = getattr(reddit_comment.author, \"icon_img\", \"\")
+            user_cache[author_name] = profile_pic
+            cm_comment.profile_pic = profile_pic
+    else:
+        cm_comment.profile_pic = \"\"
+
+    return cm_comment
+
+
+def collect_flat_comments(reddit_comment, flat_list, depth=1, max_depth=2):
+    \"\"\"Recursively collect all comments and replies into a flat list.\"\"\"
+    cm_comment = build_comment_udr(reddit_comment)
+    flat_list.append(cm_comment)
+
+    # Only go deeper if within max depth
+    if depth < max_depth:
+        for reply in reddit_comment.replies[:3]:   # limit replies per comment
+            collect_flat_comments(reply, flat_list, depth + 1, max_depth)
+
+
+def execute():
+    beginBatch()
+
+    subreddit = reddit.subreddit(\"AskReddit\")
+
+    for post in subreddit.hot(limit=1):
+        print(\"==========================================\")
+        print(\"Title   :\", post.title)
+        print(\"Content :\", post.selftext)
+
+        redditUdr = udrCreate(RedditPost)
+        redditUdr.id = post.id
+        redditUdr.title = post.title
+        redditUdr.content = post.selftext
+        redditUdr.author = post.author.name if post.author else \"[deleted]\"
+        redditUdr.author_pic = getattr(post.author, \"icon_img\", \"\") if post.author else \"\"
+        redditUdr.score = post.score
+        redditUdr.upvotes = getattr(post, \"ups\", post.score)
+        redditUdr.num_comments = post.num_comments
+        redditUdr.url = post.url
+        redditUdr.time = time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime(post.created_utc))
+
+        redditUdr.comments = []  # flat list of comments + replies
+
+        # Ensure all comments are loaded
+        post.comments.replace_more(limit=0)
+
+        # Collect top-level + replies into one flat list
+        for top_level_comment in post.comments[:3]:  # only top 3 comments
+            collect_flat_comments(top_level_comment, redditUdr.comments)
+
+        # Route UDR for downstream
+        udrRoute(redditUdr)
+
+    endBatch()
+",
+              "$Type": "dr.PythonAgentData",
+              "$Version": 10.0
+            },
+            "$Version": 1.0
+          }
+        ],
+        "XYposition": {
+          "x": 60,
+          "y": 200,
+          "$Version": 1.0
+        },
+        "$Version": 2.0
+      },
+      {
+        "Name": "Analysis_1",
+        "ID": -1939312021,
+        "Classname": "com.digitalroute.wfc.analysis.StuffyMapperInsp",
+        "Configuration": [
+          {
+            "Type": 1,
+            "Classname": "com.digitalroute.wfc.analysis.StuffyMapperInsp",
+            "Data": {
+              "sourceCode": "consume {
+    debug(input);
+    udrRoute((RedditPost)input);
+}",
+              "udrTypes": [
+                {
+                  "typeName": "bytearray",
+                  "$Version": 1.0
+                },
+                {
+                  "typeName": "DRUDR",
+                  "$Version": 1.0
+                },
+                {
+                  "TypeName": "SAPCM_PYTHON.UFL_Reddit.RedditPost",
+                  "FormatName": "SAPCM_PYTHON.UFL_Reddit",
+                  "$Type": "dr.UltraClientInfo",
+                  "$Version": 1.0
+                }
+              ],
+              "$Type": "dr.StuffyMapperData",
+              "$Version": 10.0
+            },
+            "$Version": 1.0
+          },
+          {
+            "Type": 0,
+            "Classname": "com.digitalroute.devkit.hidden.DRThreadBufferInsp",
+            "Data": {
+              "printStats": false,
+              "useOwnThread": false,
+              "$Type": "dr.DRThreadBufferConfig",
+              "$Version": 10.0
+            },
+            "$Version": 1.0
+          }
+        ],
+        "XYposition": {
+          "x": 200,
+          "y": 200,
+          "$Version": 1.0
+        },
+        "$Version": 2.0
+      },
+      {
+        "Name": "Python_2",
+        "ID": 1644056169,
+        "Classname": "com.digitalroute.pythonagents.agent.PythonBatchProcessingAgentInsp",
+        "Configuration": [
+          {
+            "Type": 1,
+            "Classname": "com.digitalroute.pythonagents.agent.PythonBatchProcessingAgentInsp",
+            "Data": {
+              "inputTypes": [
+                {
+                  "TypeName": "SAPCM_PYTHON.UFL_Reddit.RedditPost",
+                  "FormatName": "SAPCM_PYTHON.UFL_Reddit",
+                  "$Type": "dr.UltraClientInfo",
+                  "$Version": 1.0
+                }
+              ],
+              "outputTypes": [
+                {
+                  "udrTypeInfo": {
+                    "typeName": "bytearray",
+                    "$Version": 1.0
+                  },
+                  "$Version": 1.0
+                },
+                {
+                  "udrTypeInfo": {
+                    "typeName": "DRUDR",
+                    "$Version": 1.0
+                  },
+                  "$Version": 1.0
+                }
+              ],
+              "sourceCode": "from PIL import Image, ImageDraw, ImageFont
+import os, textwrap, requests
+from io import BytesIO
+
+OUTPUT_DIR_POST = \"/opt/mz/Jai/RedditApp/postImages\"
+OUTPUT_DIR_COMMENTS = \"/opt/mz/Jai/RedditApp/commentImages\"
+os.makedirs(OUTPUT_DIR_POST, exist_ok=True)
+os.makedirs(OUTPUT_DIR_COMMENTS, exist_ok=True)
+
+# --- Visual tokens (approx Reddit) ---
+C = {
+    \"page_bg\": \"#f6f7f8\",
+    \"card_bg\": \"#ffffff\",
+    \"text\":    \"#1a1a1a\",
+    \"meta\":    \"#6b7280\",
+    \"line\":    \"#d1d7e0\",
+    \"up\":      \"#ff4500\",   # orange upvote
+    \"down\":    \"#0079d3\",   # blue downvote
+}
+
+W = 900  # image width
+
+# Fonts (adjust path if needed)
+font_path = \"/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf\"
+try:
+    font = ImageFont.truetype(font_path, 20)
+    font_small = ImageFont.truetype(font_path, 16)
+except Exception:
+    font = ImageFont.load_default()
+    font_small = ImageFont.load_default()
+
+def get_fonts():
+    try:
+        title = ImageFont.truetype(\"arialbd.ttf\", 22)
+        text  = ImageFont.truetype(\"arial.ttf\", 18)
+        small = ImageFont.truetype(\"arial.ttf\", 16)
+    except:
+        # fallback to global fonts above
+        title, text, small = font, font, font_small
+    return title, text, small
+
+# --- helpers ---
+def get_avatar(url, size=(36,36)):
+    try:
+        if url and url.startswith(\"http\"):
+            r = requests.get(url, timeout=5)
+            r.raise_for_status()
+            im = Image.open(BytesIO(r.content)).convert(\"RGBA\").resize(size)
+        else:
+            im = Image.new(\"RGBA\", size, \"#d9d9d9\")
+    except:
+        im = Image.new(\"RGBA\", size, \"#d9d9d9\")
+
+    mask = Image.new(\"L\", size, 0)
+    ImageDraw.Draw(mask).ellipse((0,0,size[0],size[1]), fill=255)
+    return im, mask
+
+def format_score(n):
+    try:
+        n = int(n)
+    except:
+        return str(n)
+    sign = \"-\" if n < 0 else \"\"
+    n = abs(n)
+    if n >= 1_000_000:
+        return f\"{sign}{n/1_000_000:.1f}M\".rstrip(\"0\").rstrip(\".\")
+    if n >= 1_000:
+        return f\"{sign}{n/1_000:.1f}K\".rstrip(\"0\").rstrip(\".\")
+    return f\"{sign}{n}\"
+
+def wrap_to_pixels(text, font, max_px, draw):
+    \"\"\"Word-wrap using pixel widths (handles long words + newlines).\"\"\"
+    lines = []
+    for para in (text or \"\").splitlines() or [\"\"]:
+        words = para.split(\" \")
+        line = \"\"
+        for w in words:
+            candidate = (line + \" \" + w).strip() if line else w
+            if draw.textlength(candidate, font=font) <= max_px:
+                line = candidate
+            else:
+                if line:
+                    lines.append(line)
+                # break very long words greedily
+                while draw.textlength(w, font=font) > max_px and len(w) > 1:
+                    j = 1
+                    while j <= len(w) and draw.textlength(w[:j], font=font) <= max_px:
+                        j += 1
+                    j -= 1
+                    lines.append(w[:j])
+                    w = w[j:]
+                line = w
+        if line:
+            lines.append(line)
+        # keep paragraph break
+        lines.append(\"\")
+    if lines and lines[-1] == \"\":
+        lines.pop()
+    return \"\\n\".join(lines)
+
+# --- icon drawing helpers (no emoji, no triangles/star) ---
+def draw_upvote_icon(draw, x, y, size=22, fill=C[\"up\"]):
+    \"\"\"Draw an upward arrow with a rectangular shaft (not just a triangle).\"\"\"
+    size = int(size)
+    head_h = int(size * 0.6)
+    center_x = x + size // 2
+    # head (triangle)
+    head = [(x, y + head_h), (x + size, y + head_h), (center_x, y)]
+    draw.polygon(head, fill=fill)
+    # shaft (rounded-ish by drawing rectangle)
+    shaft_w = max(2, int(size * 0.36))
+    shaft_x = x + (size - shaft_w) // 2
+    draw.rectangle([shaft_x, y + head_h, shaft_x + shaft_w, y + size], fill=fill)
+
+def draw_downvote_icon(draw, x, y, size=22, fill=C[\"down\"]):
+    \"\"\"Draw a downward arrow (shaft + triangle head at bottom).\"\"\"
+    size = int(size)
+    head_h = int(size * 0.6)
+    center_x = x + size // 2
+    # head (triangle pointing down)
+    head = [(x, y + size - head_h), (x + size, y + size - head_h), (center_x, y + size)]
+    draw.polygon(head, fill=fill)
+    shaft_w = max(2, int(size * 0.36))
+    shaft_x = x + (size - shaft_w) // 2
+    draw.rectangle([shaft_x, y, shaft_x + shaft_w, y + size - head_h], fill=fill)
+
+def draw_award_medal(draw, x, y, size=20):
+    \"\"\"Draw a simple medal / badge: circle + inner circle + tiny ribbons above.\"\"\"
+    size = int(size)
+    r = size // 2
+    cx = x + r
+    cy = y + r
+    # outer ring
+    draw.ellipse((cx - r, cy - r, cx + r, cy + r), fill=\"#ffd166\", outline=\"#f4a261\")
+    # inner circle
+    inner_r = max(2, r - 4)
+    draw.ellipse((cx - inner_r, cy - inner_r, cx + inner_r, cy + inner_r), fill=\"#ffefb6\")
+    # ribbons (two small rectangles above circle)
+    ribbon_w = max(4, size // 3)
+    ribbon_h = max(4, size // 4)
+    draw.rectangle((cx - r - 2, cy - r - ribbon_h, cx - r - 2 + ribbon_w, cy - r), fill=\"#ffd166\")
+    draw.rectangle((cx + r - ribbon_w + 2, cy - r - ribbon_h, cx + r + 2, cy - r), fill=\"#ffd166\")
+# --- icon drawing helpers (Reply + Share) ---
+def draw_reply_icon(draw, x, y, size=22, fill=(120, 124, 126)):
+    \"\"\"Draw a reply/curved back arrow.\"\"\"
+    size = int(size)
+    arrow_len = int(size * 0.7)
+    shaft_h = int(size * 0.35)
+
+    # horizontal shaft
+    draw.line([(x, y + shaft_h), (x + arrow_len, y + shaft_h)], fill=fill, width=2)
+
+    # arrow head (pointing left)
+    head = [(x, y + shaft_h), (x + int(size * 0.25), y + shaft_h - int(size * 0.25)),
+            (x + int(size * 0.25), y + shaft_h + int(size * 0.25))]
+    draw.polygon(head, fill=fill)
+
+def draw_share_icon(draw, x, y, size=22, fill=(120, 124, 126)):
+    \"\"\"Draw a proper share icon (three connected circles).\"\"\"
+    r = max(2, size // 6)  # circle radius
+    offset_x = int(size * 0.6)
+    offset_y = int(size * 0.4)
+
+    # circle positions
+    c1 = (x, y + offset_y)              # left
+    c2 = (x + offset_x, y)              # top right
+    c3 = (x + offset_x, y + 2*offset_y) # bottom right
+
+    # lines connecting circles
+    draw.line([c1, c2], fill=fill, width=2)
+    draw.line([c1, c3], fill=fill, width=2)
+
+    # draw the 3 circles
+    for cx, cy in [c1, c2, c3]:
+        draw.ellipse([cx-r, cy-r, cx+r, cy+r], fill=fill)
+
+# --- Post image (clean, simple) ---
+def save_post_image(post):
+    font_title, font_text, font_small = get_fonts()
+
+    # measure content
+    tmp = Image.new(\"RGB\", (1,1))
+    dtmp = ImageDraw.Draw(tmp)
+    content_left = 20 + 48  # avatar + padding
+    content_right_pad = 20
+    content_width = W - content_left - content_right_pad
+    wrapped = wrap_to_pixels(post.content if post.content else \"\",
+                             font_text, content_width, dtmp)
+    bbox = dtmp.multiline_textbbox((0,0), wrapped, font=font_text, spacing=6)
+    content_h = (bbox[3]-bbox[1]) if bbox else 0
+
+    header_h = 50
+    title_h = int(dtmp.textbbox((0,0), post.title, font=font_title)[3] + 14)
+    actions_h = 60
+    H = 24 + header_h + title_h + content_h + actions_h + 24
+
+    img = Image.new(\"RGB\", (W, H), C[\"page_bg\"])
+    draw = ImageDraw.Draw(img)
+
+    # avatar
+    y = 20
+    av, mask = get_avatar(getattr(post, \"author_pic\", \"\"))
+    img.paste(av, (20, y), mask)
+
+    # meta
+    draw.text((68, y+4), f\"u/{post.author}\", fill=C[\"text\"], font=font_title)
+    uname_w = draw.textlength(f\"u/{post.author}\", font=font_title)
+    draw.text((68 + uname_w + 10, y+6), f\"· {post.time}\", fill=C[\"meta\"], font=font_small)
+
+    # title + body
+    y += 50
+    draw.text((20, y), post.title, fill=C[\"text\"], font=font_title)
+    y += 42
+    draw.multiline_text((content_left, y), wrapped, font=font_text, fill=C[\"text\"], spacing=6)
+
+    # actions row - draw icons (not emoji)
+    score_y = H - 42
+    x = content_left
+    icon_size = 22
+
+    # upvote icon + score (score colored orange)
+    icon_top = score_y - icon_size // 2
+    draw_upvote_icon(draw, x, icon_top, size=icon_size, fill=C[\"up\"])
+    # score text (vertically center text near icon)
+    text_h = draw.textbbox((0,0), \"0\", font=font_small)[3]
+    text_y = score_y - text_h // 2
+    draw.text((x + icon_size + 8, text_y), format_score(getattr(post, \"score\", 0)),
+              font=font_small, fill=C[\"up\"])
+
+    # downvote icon
+    dx = x + 120
+    draw_downvote_icon(draw, dx, icon_top, size=icon_size, fill=C[\"down\"])
+
+    # labels: Comment, Share
+    ax = dx + 120
+    
+    # reply
+    draw_reply_icon(draw, ax, icon_top, size=icon_size, fill=C[\"meta\"])
+    draw.text((ax + icon_size + 8, text_y), \"Reply\", font=font_small, fill=C[\"meta\"])
+    ax += int(draw.textlength(\"Reply\", font=font_small)) + 80
+
+    # share
+    draw_share_icon(draw, ax, icon_top, size=icon_size, fill=C[\"meta\"])
+    draw.text((ax + icon_size + 8, text_y), \"Share\", font=font_small, fill=C[\"meta\"])
+    ax += int(draw.textlength(\"Share\", font=font_small)) + 80
+    
+    
+    
+    
+    
+    # award medal icon
+    draw_award_medal(draw, ax, icon_top + 1, size=20)
+    ax += 40
+
+    # overflow dots
+    dots_x = W - 60
+    for i in range(3):
+        draw.ellipse((dots_x + i*10, score_y+6, dots_x + i*10 + 5, score_y+11), fill=C[\"meta\"])
+
+    out = os.path.join(OUTPUT_DIR_POST, f\"{post.id}_post.png\")
+    img.save(out)
+    print(f\"Saved: {out}\")
+
+# --- Comment image (Reddit-ish) ---
+def save_comment_image(comment, post_id, index, indent=0):
+    font_title, font_text, font_small = get_fonts()
+
+    # measurement pass
+    tmp = Image.new(\"RGB\", (1,1))
+    dtmp = ImageDraw.Draw(tmp)
+
+    indent_px = max(0, indent)
+    left_gutter = 16 + indent_px
+    thread_x = left_gutter + 8
+    avatar_x = left_gutter + 24
+    content_x = avatar_x + 48
+    content_w = W - content_x - 24
+
+    wrapped = wrap_to_pixels(comment.text, font_text, content_w, dtmp)
+    body_bbox = dtmp.multiline_textbbox((0,0), wrapped, font=font_text, spacing=6)
+    body_h = (body_bbox[3]-body_bbox[1]) if body_bbox else 0
+
+    header_h = 44
+    actions_h = 60
+    H = 20 + header_h + 6 + body_h + 14 + actions_h + 18
+
+    img = Image.new(\"RGB\", (W, H), C[\"page_bg\"])
+    draw = ImageDraw.Draw(img)
+
+    # thread line + collapse control
+    draw.line((thread_x, 0, thread_x, H), fill=C[\"line\"], width=2)
+    cx, cy, r = thread_x, 32, 9
+    draw.ellipse((cx-r, cy-r, cx+r, cy+r), outline=C[\"line\"], width=2, fill=C[\"card_bg\"])
+    draw.line((cx-5, cy, cx+5, cy), fill=C[\"line\"], width=2)
+
+    # avatar
+    av, mask = get_avatar(getattr(comment, \"profile_pic\", \"\"))
+    img.paste(av, (avatar_x, 16), mask)
+
+    # username + time
+    uname_x = content_x
+    draw.text((uname_x, 16), f\"u/{comment.author}\", fill=C[\"text\"], font=font_title)
+    w_un = draw.textlength(f\"u/{comment.author}\", font=font_title)
+    draw.text((uname_x + w_un + 10, 18), f\"· {comment.time}\", fill=C[\"meta\"], font=font_small)
+
+    # body
+    draw.multiline_text((content_x, 16 + header_h), wrapped, font=font_text,
+                        fill=C[\"text\"], spacing=6)
+
+    # actions row
+    score_y = H - 34
+    x = content_x
+    icon_size = 20
+    icon_top = score_y - icon_size // 2
+
+    # upvote + score
+    draw_upvote_icon(draw, x, icon_top, size=icon_size, fill=C[\"up\"])
+    text_h = draw.textbbox((0,0), \"0\", font=font_small)[3]
+    text_y = score_y - text_h // 2
+    draw.text((x + icon_size + 8, text_y), format_score(getattr(comment, \"score\", 0)),
+              font=font_small, fill=C[\"up\"])
+
+    # downvote
+    dx = x + 120
+    draw_downvote_icon(draw, dx, icon_top, size=icon_size, fill=C[\"down\"])
+
+    # reply
+    ax = dx + 120
+    draw_reply_icon(draw, ax, icon_top, size=icon_size, fill=C[\"meta\"])
+    draw.text((ax + icon_size + 8, text_y), \"Reply\", font=font_small, fill=C[\"meta\"])
+    ax += int(draw.textlength(\"Reply\", font=font_small)) + 80
+
+    # share
+    draw_share_icon(draw, ax, icon_top, size=icon_size, fill=C[\"meta\"])
+    draw.text((ax + icon_size + 8, text_y), \"Share\", font=font_small, fill=C[\"meta\"])
+    ax += int(draw.textlength(\"Share\", font=font_small)) + 80
+
+    # award medal
+    draw_award_medal(draw, ax, icon_top + 1, size=18)
+    ax += 36
+
+    # overflow dots
+    dots_x = W - 60
+    for i in range(3):
+        draw.ellipse((dots_x + i*10, score_y+6, dots_x + i*10 + 5, score_y+11), fill=C[\"meta\"])
+
+    out = os.path.join(OUTPUT_DIR_COMMENTS, f\"{post_id}_comment_{index}.png\")
+    img.save(out)
+    print(f\"Saved: {out}\")
+
+
+def consume(input):
+    save_post_image(input)
+    for i, cm in enumerate(input.comments, start=1):
+        save_comment_image(cm, input.id, i, indent=0)
+",
+              "$Type": "dr.PythonAgentData",
+              "$Version": 10.0
+            },
+            "$Version": 1.0
+          }
+        ],
+        "XYposition": {
+          "x": 360,
+          "y": 200,
+          "$Version": 1.0
+        },
+        "$Version": 2.0
+      },
+      {
+        "Name": "Analysis_2",
+        "ID": -1186562757,
+        "Classname": "com.digitalroute.wfc.analysis.StuffyMapperInsp",
+        "Configuration": [
+          {
+            "Type": 1,
+            "Classname": "com.digitalroute.wfc.analysis.StuffyMapperInsp",
+            "Data": {
+              "sourceCode": "consume {
+
+}",
+              "udrTypes": [
+                {
+                  "typeName": "bytearray",
+                  "$Version": 1.0
+                },
+                {
+                  "typeName": "DRUDR",
+                  "$Version": 1.0
+                }
+              ],
+              "$Type": "dr.StuffyMapperData",
+              "$Version": 10.0
+            },
+            "$Version": 1.0
+          },
+          {
+            "Type": 0,
+            "Classname": "com.digitalroute.devkit.hidden.DRThreadBufferInsp",
+            "Data": {
+              "printStats": false,
+              "useOwnThread": false,
+              "$Type": "dr.DRThreadBufferConfig",
+              "$Version": 10.0
+            },
+            "$Version": 1.0
+          }
+        ],
+        "XYposition": {
+          "x": 520,
+          "y": 200,
+          "$Version": 1.0
+        },
+        "$Version": 2.0
+      }
+    ],
+    "routes": [
+      {
+        "destinationId": -1939312021,
+        "id": -2,
+        "name": "r_1",
+        "realtimeMode": "Not set",
+        "routeStyle": "Bezier",
+        "sourceId": -1465262374,
+        "stroke": [
+          {
+            "x": 90,
+            "y": 180,
+            "$Version": 1.0
+          },
+          {
+            "x": 117,
+            "y": 168,
+            "$Version": 1.0
+          },
+          {
+            "x": 143,
+            "y": 168,
+            "$Version": 1.0
+          },
+          {
+            "x": 170,
+            "y": 180,
+            "$Version": 1.0
+          }
+        ],
+        "$Version": 1.0
+      },
+      {
+        "destinationId": 1644056169,
+        "id": -3,
+        "name": "r_2",
+        "realtimeMode": "Not set",
+        "routeStyle": "Bezier",
+        "sourceId": -1939312021,
+        "stroke": [
+          {
+            "x": 230,
+            "y": 181,
+            "$Version": 1.0
+          },
+          {
+            "x": 263,
+            "y": 168,
+            "$Version": 1.0
+          },
+          {
+            "x": 297,
+            "y": 168,
+            "$Version": 1.0
+          },
+          {
+            "x": 330,
+            "y": 181,
+            "$Version": 1.0
+          }
+        ],
+        "$Version": 1.0
+      },
+      {
+        "destinationId": -1186562757,
+        "id": -4,
+        "name": "r_3",
+        "realtimeMode": "Not set",
+        "routeStyle": "Bezier",
+        "sourceId": 1644056169,
+        "stroke": [
+          {
+            "x": 390,
+            "y": 181,
+            "$Version": 1.0
+          },
+          {
+            "x": 423,
+            "y": 168,
+            "$Version": 1.0
+          },
+          {
+            "x": 457,
+            "y": 168,
+            "$Version": 1.0
+          },
+          {
+            "x": 490,
+            "y": 181,
+            "$Version": 1.0
+          }
+        ],
+        "$Version": 1.0
+      }
+    ],
+    "services": [],
+    "templateValid": true,
+    "wfExecutionConfig": {
+      "debugType": "File",
+      "executionSettings": {
+        "distributionType": "Round Robin",
+        "enabled": false,
+        "executionGroups": [],
+        "$Version": 1.0
+      },
+      "noOfFilesToKeep": -1,
+      "txnHandler": "Default Handler",
+      "$Version": 10.0
+    },
+    "wfIdCounter": 1,
+    "$Type": "dr.WorkflowBatchData",
+    "$Version": 1.0
+  },
+  "documentation": "",
+  "Is Dry Run": false,
+  "$Type": "dr.Configuration",
+  "$Version": 10.1
+}
