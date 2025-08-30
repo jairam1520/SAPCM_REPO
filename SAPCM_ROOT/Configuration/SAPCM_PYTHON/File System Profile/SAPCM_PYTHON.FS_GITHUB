@@ -1,0 +1,62 @@
+{
+  "Key": "DR1756546439838",
+  "Name": "FS_GITHUB",
+  "Type": "File System Profile",
+  "Version": 2,
+  "Folder": "SAPCM_PYTHON",
+  "Owner": "mzadmin",
+  "Is Valid": true,
+  "Access Groups -read -write -execute": [
+    "Administrator",
+    "Administrator",
+    "Administrator"
+  ],
+  "Data": {
+    "token": {
+      "password": "DR-4-1E935E2391D90FB3A5CE8CA93661959BDE6D49A48ADD05E382EAB17544873413334F304B7D632D04A20B957D16EB95D3",
+      "secrets_alias": "",
+      "$Version": 1.0
+    },
+    "cloned": false,
+    "File System type": "Git",
+    "Connection Params": [
+      {
+        "Key": "repoUrl",
+        "Value": {
+          "$Value": "https://github.com/jairam1520/SAPCM_REPO.git",
+          "$Type": "string"
+        }
+      },
+      {
+        "Key": "provider",
+        "Value": {
+          "$Value": "GitHub",
+          "$Type": "string"
+        }
+      },
+      {
+        "Key": "branch",
+        "Value": {
+          "$Value": "main",
+          "$Type": "string"
+        }
+      },
+      {
+        "Key": "username",
+        "Value": {
+          "$Value": "",
+          "$Type": "string"
+        }
+      }
+    ],
+    "Secret Connection Params": [],
+    "$Type": "dr.GitFileSystemProfileData",
+    "$Version": 2.0
+  },
+  "documentation": "",
+  "Dynamic Parameters": [],
+  "Is Dry Run": false,
+  "$Type": "dr.Configuration",
+  "$Version": 10.1,
+  "Comment": "Successfully cloned"
+}
