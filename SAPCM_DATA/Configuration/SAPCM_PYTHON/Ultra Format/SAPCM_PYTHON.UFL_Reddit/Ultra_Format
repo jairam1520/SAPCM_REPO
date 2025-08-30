@@ -1,18 +1,6 @@
-{
-  "Key": "DR1756401517993",
-  "Name": "UFL_Reddit",
-  "Type": "Ultra Format",
-  "Version": 2,
-  "Folder": "SAPCM_PYTHON",
-  "Owner": "mzadmin",
-  "Is Valid": true,
-  "Access Groups -read -write -execute": [
-    "Administrator",
-    "Administrator",
-    "Administrator"
-  ],
-  "Data": {
-    "Definition": "internal RedditPost { 
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<exportmultiplex category="Ultra_Format" ref_path="ultra_format[Internal]/storable[ultra_format]/storable[Data]">
+   <string name="Definition"><![CDATA[internal RedditPost { 
     string id; // Reddit post ID 
     string title; // Post title 
     string content; // Post body text 
@@ -36,12 +24,11 @@ internal Comment {
     int downvotes; 
     string time; 
     list<Comment> replies; 
-};",
-    "$Type": "dr.UltraFormatConfig",
-    "$Version": 2.0
-  },
-  "documentation": "",
-  "Is Dry Run": false,
-  "$Type": "dr.Configuration",
-  "$Version": 10.1
-}
+};
+internal ImageInt{
+    string Type;
+    string Id;
+    bytearray data;  
+    string name;  
+};]]></string>
+</exportmultiplex>
