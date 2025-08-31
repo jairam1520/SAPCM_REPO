@@ -670,7 +670,7 @@ initialize{
     date currDate = dateCreateNow();
     string yyyy = ""+dateGetYear(currDate);
     string MM = dateGetMonth(currDate)<10 ? "0"+dateGetMonth(currDate): ""+dateGetMonth(currDate);
-    string dd = dateGetDay(currDate)<10 ? "0"+dateGetDay(currDate)+"0": ""+dateGetDay(currDate);
+    string dd = dateGetDay(currDate)<10 ? "0"+dateGetDay(currDate): ""+dateGetDay(currDate);
     strDt = yyyy+MM+dd;
     debug(strDt);
     baseDir = baseDir+strDt;
