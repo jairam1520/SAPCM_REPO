@@ -30,5 +30,8 @@ internal ImageInt{
     string Id;
     bytearray data;  
     string name;  
+};
+internal AudioInt : extends(ImageInt){
+    
 };]]></string>
 </exportmultiplex>

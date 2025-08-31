@@ -194,7 +194,7 @@ def execute():
                   </array>
                   <storable name="interpreter" null="true"/>
                   <array name="mims" null="true"/>
-                  <array classname="com.digitalroute.pythonagents.OutputTypeInfo" name="outputTypes" size="3">
+                  <array classname="com.digitalroute.pythonagents.OutputTypeInfo" name="outputTypes" size="4">
                      <storable name="0" storable-id="dr.PythonOutputTypeInfo" ver="1.0">
                         <string name="route" null="true"/>
                         <storable name="udrTypeInfo" storable-id="dr.DRTypeInfo" ver="1.0">
@@ -214,12 +214,24 @@ def execute():
                            <string name="TypeName" value="SAPCM_PYTHON.UFL_Reddit.ImageInt"/>
                         </storable>
                      </storable>
+                     <storable name="3" storable-id="dr.PythonOutputTypeInfo" ver="1.0">
+                        <string name="route" null="true"/>
+                        <storable name="udrTypeInfo" storable-id="dr.UltraClientInfo" ver="1.0">
+                           <string name="FormatName" value="SAPCM_PYTHON.UFL_Reddit"/>
+                           <string name="TypeName" value="SAPCM_PYTHON.UFL_Reddit.AudioInt"/>
+                        </storable>
+                     </storable>
                   </array>
-                  <string name="sourceCode"><![CDATA[from PIL import Image, ImageDraw, ImageFont
+                  <string name="sourceCode"><![CDATA[
 import os, textwrap, requests
+import pyttsx3
+import io
+import random
+from gtts import gTTS
+from pydub import AudioSegment  # pip install pydub
 from io import BytesIO
-from ultra.SAPCM_PYTHON.UFL_Reddit import ImageInt
-
+from ultra.SAPCM_PYTHON.UFL_Reddit import ImageInt,AudioInt
+from PIL import Image, ImageDraw, ImageFont
 # --- Visual tokens (approx Reddit) ---
 C = {
     "page_bg": "#f6f7f8",
@@ -490,6 +502,13 @@ def save_post_image(post):
     imageUdr.name = f"{post.id}_post.png"
     
     udrRoute(imageUdr)
+    
+    audioUdr = udrCreate(AudioInt)
+    audioUdr.Id = post.id
+    audioUdr.Type = "post"
+    audioUdr.data = text_to_mp3_random_accent(post.title)
+    audioUdr.name = f"{post.id}_post.mp3"
+    udrRoute(audioUdr)
 
 
 # --- Comment image (Reddit-ish) ---
@@ -590,7 +609,44 @@ def save_comment_image(comment, post_id, index, indent=0):
     imageUdr.name = f"{post_id}_comment_{index}.png"
     udrRoute(imageUdr)
     
+    audioUdr = udrCreate(AudioInt)
+    audioUdr.Id = post_id
+    audioUdr.Type = "comment"
+    audioUdr.data = text_to_mp3_random_accent(comment.text)
+    audioUdr.name = f"{post_id}_comment_{index}.mp3"
+    udrRoute(audioUdr)
+    
+def text_to_mp3_bytes(text: str, lang="en", tld="com", **kwargs):
+    """
+    Convert text to MP3 bytes for MZ.
+    Accepts either tld='com'/'co.uk'/'com.au'/'co.in' or voice= (alias).
+    """
+    # Backward-compat: allow voice= as an alias for tld=
+    if "voice" in kwargs and kwargs["voice"]:
+        tld = kwargs["voice"]
 
+    # Ensure plain string (avoid .strip errors if an object is passed)
+    text = str(text)
+
+    mp3_bytes = BytesIO()
+    tts = gTTS(text=text, lang=lang, tld=tld)
+    tts.write_to_fp(mp3_bytes)
+    mp3_bytes.seek(0)
+
+    # Convert to DR bytearray for the next agent
+    raw = mp3_bytes.getvalue()
+    return drbytearray(raw)
+    
+def text_to_mp3_random_accent(text: str, lang="en"):
+    """
+    Convert text to MP3 bytes with a random accent.
+    Randomly selects one of: US, UK, Australia, India.
+    """
+    accents = ["com", "co.uk", "com.au", "co.in"]
+    chosen_accent = random.choice(accents)
+    #print(f"[INFO] Using accent: {chosen_accent}")  # For debug/logging
+    return text_to_mp3_bytes(text, lang=lang, voice=chosen_accent)
+    
 def consume(input):
     save_post_image(input)
     for i, cm in enumerate(input.comments, start=1):
@@ -621,13 +677,22 @@ initialize{
     debug(baseDir);
 }
 consume {
-    ImageInt img = (ImageInt)input;
-    if(strREContains(img.name , "comment")){
-        udrRoute(createMultiForwardingUDR(baseDir+"/comment",img.name,img.data));
-    }else{
-        udrRoute(createMultiForwardingUDR(baseDir+"/post",img.name,img.data));
+    if(instanceOf(input,ImageInt)){
+        ImageInt img = (ImageInt)input;
+        if(strREContains(img.Type , "comment")){
+            udrRoute(createMultiForwardingUDR(baseDir+"/comment",img.name,img.data));
+        }else{
+            udrRoute(createMultiForwardingUDR(baseDir+"/post",img.name,img.data));
+        }
+    }else if(instanceOf(input,AudioInt)){
+        AudioInt audio = (AudioInt)input;
+        if(strREContains(audio.Type , "comment")){
+            udrRoute(createMultiForwardingUDR(baseDir+"/comment",audio.name,audio.data));
+        }else{
+            udrRoute(createMultiForwardingUDR(baseDir+"/post",audio.name,audio.data));
+        }
     }
-    
+        
 }
 MultiForwardingUDR createMultiForwardingUDR(string dir, string file, bytearray fileContent){
     //Create the FNTUDR
@@ -647,14 +712,18 @@ MultiForwardingUDR createMultiForwardingUDR(string dir, string file, bytearray f
     multiForwardingUDR.content = fileContent;
     return multiForwardingUDR;
 }]]></string>
-                  <array classname="com.digitalroute.devkit.drudr.DRTypeInfo" name="udrTypes" size="3">
-                     <storable name="0" storable-id="dr.DRTypeInfo" ver="1.0">
-                        <string name="TypeName" value="bytearray"/>
+                  <array classname="com.digitalroute.devkit.drudr.DRTypeInfo" name="udrTypes" size="4">
+                     <storable name="0" storable-id="dr.UltraClientInfo" ver="1.0">
+                        <string name="FormatName" value="SAPCM_PYTHON.UFL_Reddit"/>
+                        <string name="TypeName" value="SAPCM_PYTHON.UFL_Reddit.AudioInt"/>
                      </storable>
                      <storable name="1" storable-id="dr.DRTypeInfo" ver="1.0">
+                        <string name="TypeName" value="bytearray"/>
+                     </storable>
+                     <storable name="2" storable-id="dr.DRTypeInfo" ver="1.0">
                         <string name="TypeName" value="DRUDR"/>
                      </storable>
-                     <storable name="2" storable-id="dr.UltraClientInfo" ver="1.0">
+                     <storable name="3" storable-id="dr.UltraClientInfo" ver="1.0">
                         <string name="FormatName" value="SAPCM_PYTHON.UFL_Reddit"/>
                         <string name="TypeName" value="SAPCM_PYTHON.UFL_Reddit.ImageInt"/>
                      </storable>
