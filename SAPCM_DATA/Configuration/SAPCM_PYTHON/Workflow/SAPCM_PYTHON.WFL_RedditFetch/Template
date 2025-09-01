@@ -97,7 +97,8 @@ def build_comment_udr(reddit_comment):
 def collect_flat_comments(reddit_comment, flat_list, depth=1, max_depth=2):
     """Recursively collect all comments and replies into a flat list."""
     cm_comment = build_comment_udr(reddit_comment)
-    flat_list.append(cm_comment)
+    if(len(cm_comment.text) <= 240 and len(flat_list) < 7):
+        flat_list.append(cm_comment)
 
     # Only go deeper if within max depth
     if depth < max_depth:
@@ -133,7 +134,7 @@ def execute():
         post.comments.replace_more(limit=0)
 
         # Collect top-level + replies into one flat list
-        for top_level_comment in post.comments[:3]:  # only top 3 comments
+        for top_level_comment in post.comments[:4]:  # only top 3 comments
             collect_flat_comments(top_level_comment, redditUdr.comments)
 
         # Route UDR for downstream
@@ -234,7 +235,7 @@ from ultra.SAPCM_PYTHON.UFL_Reddit import ImageInt,AudioInt
 from PIL import Image, ImageDraw, ImageFont
 # --- Visual tokens (approx Reddit) ---
 C = {
-    "page_bg": "#f6f7f8",
+    "page_bg": "#B2BEB5",
     "card_bg": "#ffffff",
     "text":    "#1a1a1a",
     "meta":    "#6b7280",
@@ -637,13 +638,16 @@ def text_to_mp3_bytes(text: str, lang="en", tld="com", **kwargs):
     raw = mp3_bytes.getvalue()
     return drbytearray(raw)
     
+_accents = ["com", "co.uk", "com.au", "co.in"]
+_accent_index = 0
 def text_to_mp3_random_accent(text: str, lang="en"):
     """
     Convert text to MP3 bytes with a random accent.
     Randomly selects one of: US, UK, Australia, India.
     """
-    accents = ["com", "co.uk", "com.au", "co.in"]
-    chosen_accent = random.choice(accents)
+    global _accent_index
+    chosen_accent = _accents[_accent_index]
+    _accent_index = (_accent_index + 1) % len(_accents)
     #print(f"[INFO] Using accent: {chosen_accent}")  # For debug/logging
     return text_to_mp3_bytes(text, lang=lang, voice=chosen_accent)
     

@@ -47,40 +47,139 @@
                      </storable>
                   </array>
                   <string name="sourceCode"><![CDATA[import os
-import sys
-from datetime import datetime, date
-
-
-from PIL import Image
-
-# ✅ Patch for backward compatibility (Pillow >= 10)
-if not hasattr(Image, 'ANTIALIAS'):
-    Image.ANTIALIAS = Image.Resampling.LANCZOS
-
-from moviepy.editor import ImageClip, AudioFileClip, concatenate_videoclips
-
+import datetime
+from moviepy.editor import ImageClip, AudioFileClip,VideoFileClip, CompositeVideoClip, concatenate_videoclips, ColorClip
+from moviepy.video.fx import all as vfx
+from pydub import AudioSegment
+from pydub.effects import speedup
 
 def execute():
     beginBatch()
+    # -------------------------
+    # Usage
+    # -------------------------
+    MINECRAFT_VIDEO_PATH = "/opt/mz/Jai/RedditApp/MinecraftFiles/m2-res_720p_(1).mp4"
     
-    print("Running Python from:", sys.executable)
-    print("Python version:", sys.version)
-
     post_images, post_audios, comment_images, comment_audios = get_today_files()
     
     # Combine in required order: posts first, then comments
     all_images = post_images + comment_images
     all_audios = post_audios + comment_audios
-    
+
     if all_images and all_audios:
-        images_and_audio_to_video(all_images, all_audios)
+        today = datetime.date.today().strftime("%Y%m%d")
+        images_and_audio_to_video(all_images, all_audios, MINECRAFT_VIDEO_PATH, f"slideshow_{today}.mp4")
     endBatch()
 
+def images_and_audio_to_video(image_files, audio_files, minecraft_video_path, output_filename="slideshow_post_then_comment.mp4", speed_multiplier=1.2):
+    """
+    Create a video slideshow with a background video.
+    Ensures foreground images are explicitly centered on a transparent canvas.
+    Speeds up audio files before use.
+    """
+    try:
+        minecraft_background = VideoFileClip(minecraft_video_path)
+    except Exception as e:
+        print(f"Error loading Minecraft background video: {e}")
+        return None
+
+    bg_w, bg_h = minecraft_background.size
+    clips_for_composite = []
+    total_slideshow_duration = 0
+
+    temp_dir = os.path.join(os.path.dirname(image_files[0]), "temp_sped_up_audio")
+    os.makedirs(temp_dir, exist_ok=True)
+
+    for i, (img, audio) in enumerate(zip(image_files, audio_files)):
+        new_audio_path = os.path.join(temp_dir, f"sped_up_{i}.mp3")
+        if not speed_up_audio(audio, new_audio_path, speed_multiplier):
+            continue
+
+        narration_audio_clip = AudioFileClip(new_audio_path)
+        segment_duration = narration_audio_clip.duration
+        total_slideshow_duration += segment_duration
+
+        img_clip = ImageClip(img).set_duration(segment_duration)
+        
+        original_img_w, original_img_h = img_clip.size
+        max_display_width_ratio = 0.8
+        max_display_height_ratio = 0.8
+        max_display_w = bg_w * max_display_width_ratio
+        max_display_h = bg_h * max_display_height_ratio
+        aspect_ratio = original_img_w / original_img_h
+        scaled_h_by_w = max_display_w / aspect_ratio
+        scaled_w_by_h = max_display_h * aspect_ratio
+        
+        if scaled_h_by_w <= max_display_h:
+            new_img_w, new_img_h = max_display_w, scaled_h_by_w
+        else:
+            new_img_w, new_img_h = scaled_w_by_h, max_display_h
+
+        img_clip = img_clip.resize(width=new_img_w, height=new_img_h)
+        
+        # --- NEW CANVAS CENTERING LOGIC ---
+        # Create a transparent color clip the size of the background video for this image's duration
+        # This acts as a consistent canvas for positioning
+        centered_canvas = ColorClip(size=(bg_w, bg_h), color=(0,0,0,0), duration=segment_duration)
+        
+        # Calculate x, y to center the resized image on this canvas
+        x_pos_on_canvas = (bg_w - new_img_w) / 2
+        y_pos_on_canvas = (bg_h - new_img_h) / 2
+        
+        # Composite the image onto the transparent canvas, positioning it centrally
+        img_clip_on_canvas = CompositeVideoClip([
+            centered_canvas,
+            img_clip.set_pos((x_pos_on_canvas, y_pos_on_canvas))
+        ]).set_duration(segment_duration) # Ensure composite has correct duration
+        
+        # Set the audio to this new composite clip
+        img_clip_on_canvas = img_clip_on_canvas.set_audio(narration_audio_clip)
+        # --- END NEW CANVAS CENTERING LOGIC ---
+
+        clips_for_composite.append(img_clip_on_canvas) # Append the canvas-wrapped clip
+
+    if minecraft_background.duration < total_slideshow_duration:
+        final_background_video = minecraft_background.fx(vfx.loop, duration=total_slideshow_duration)
+    else:
+        final_background_video = minecraft_background.subclip(0, total_slideshow_duration)
+
+    # Concatenate all canvas-wrapped foreground clips
+    foreground_video_with_audio = concatenate_videoclips(clips_for_composite, method="compose")
+    
+    final_video_composite = CompositeVideoClip([
+        final_background_video.set_audio(None),
+        foreground_video_with_audio
+    ])
+
+    today = datetime.date.today().strftime("%Y%m%d")
+    save_dir = f"/opt/mz/Jai/RedditApp/{today}"
+    os.makedirs(save_dir, exist_ok=True)
+    output_file_path = os.path.join(save_dir, output_filename)
+
+    final_video_composite.write_videofile(output_file_path, fps=final_background_video.fps, threads=4, preset='medium')
+    
+    for file in os.listdir(temp_dir):
+        os.remove(os.path.join(temp_dir, file))
+    os.rmdir(temp_dir)
+    
+    return output_file_path
+
+
+def speed_up_audio(input_path, output_path, speed_multiplier):
+    """Speeds up an audio file using pydub."""
+    try:
+        audio = AudioSegment.from_mp3(input_path)
+        faster_audio = speedup(audio, playback_speed=speed_multiplier)
+        faster_audio.export(output_path, format="mp3")
+        return True
+    except Exception as e:
+        print(f"Error speeding up audio file {input_path}: {e}")
+        return False
 def get_today_files(base_dir="/opt/mz/Jai/RedditApp"):
     """
     Returns (post_images, post_audios, comment_images, comment_audios) for today's date.
     """
-    today_str = datetime.now().strftime("%Y%m%d") 
+    today_str = datetime.date.today().strftime("%Y%m%d")
     base_today = os.path.join(base_dir, today_str)
 
     def collect_files(subdir):
@@ -97,45 +196,11 @@ def get_today_files(base_dir="/opt/mz/Jai/RedditApp"):
 
     post_images, post_audios = collect_files("post")
     comment_images, comment_audios = collect_files("comment")
-    return post_images, post_audios, comment_images, comment_audios
-    
-def images_and_audio_to_video(image_files, audio_files):
-    """
-    Create a video slideshow from matching lists of images and audio.
-    Each image is shown for the duration of its audio.
-    Saves the output inside today's dir: /opt/mz/Jai/RedditApp/YYYYMMDD/
-    """
-    clips = []
-
-    for img, audio in zip(image_files, audio_files):
-        audio_clip = AudioFileClip(audio)
-        img_clip = ImageClip(img).set_duration(audio_clip.duration)
-        img_clip = img_clip.set_audio(audio_clip)
-
-        # Optional: resize image to 720p
-        img_clip = img_clip.resize(height=720)
-
-        clips.append(img_clip)
-
-    # Concatenate all image+audio segments
-    final_video = concatenate_videoclips(clips, method="compose")
-
-    # Build dynamic save path
-    today = date.today().strftime("%Y%m%d")
-    save_dir = f"/opt/mz/Jai/RedditApp/{today}"
-    os.makedirs(save_dir, exist_ok=True)  # make sure dir exists
-
-    output_file = os.path.join(save_dir, "slideshow_post_then_comment.mp4")
-
-    # Save video
-    final_video.write_videofile(output_file, fps=24)
-
-    return output_file
-]]></string>
+    return post_images, post_audios, comment_images, comment_audios]]></string>
                </storable>
             </storable>
          </array>
-         <string name="Name" value="Python_1"/>
+         <string name="Name" value="CollMp3ImgFiles"/>
       </storable>
       <storable name="1" storable-id="dr.WfNode" ver="2.0">
          <string name="Classname" value="com.digitalroute.wfc.analysis.StuffyMapperInsp"/>
@@ -164,12 +229,12 @@ def images_and_audio_to_video(image_files, audio_files):
                </storable>
             </storable>
          </array>
-         <string name="Name" value="Analysis_1"/>
+         <string name="Name" value="Analysis_2"/>
       </storable>
    </list>
    <list classname="java.util.ArrayList" name="Routes">
       <storable name="0" storable-id="dr.WfRoute" ver="2.0">
-         <string name="Name" value="r_1"/>
+         <string name="Name" value="r_2"/>
          <int name="Realtime mode" value="0"/>
       </storable>
    </list>
