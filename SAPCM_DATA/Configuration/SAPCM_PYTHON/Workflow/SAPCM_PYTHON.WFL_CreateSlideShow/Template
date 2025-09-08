@@ -32,7 +32,7 @@
                   <array name="inputTypes" null="true"/>
                   <storable name="interpreter" null="true"/>
                   <array name="mims" null="true"/>
-                  <array classname="com.digitalroute.pythonagents.OutputTypeInfo" name="outputTypes" size="2">
+                  <array classname="com.digitalroute.pythonagents.OutputTypeInfo" name="outputTypes" size="3">
                      <storable name="0" storable-id="dr.PythonOutputTypeInfo" ver="1.0">
                         <string name="route" null="true"/>
                         <storable name="udrTypeInfo" storable-id="dr.DRTypeInfo" ver="1.0">
@@ -43,6 +43,13 @@
                         <string name="route" null="true"/>
                         <storable name="udrTypeInfo" storable-id="dr.DRTypeInfo" ver="1.0">
                            <string name="TypeName" value="DRUDR"/>
+                        </storable>
+                     </storable>
+                     <storable name="2" storable-id="dr.PythonOutputTypeInfo" ver="1.0">
+                        <string name="route" value="r_2"/>
+                        <storable name="udrTypeInfo" storable-id="dr.UltraClientInfo" ver="1.0">
+                           <string name="FormatName" value="SAPCM_PYTHON.UFL_Reddit"/>
+                           <string name="TypeName" value="SAPCM_PYTHON.UFL_Reddit.Pulse"/>
                         </storable>
                      </storable>
                   </array>
@@ -69,6 +76,8 @@ def execute():
     if all_images and all_audios:
         today = datetime.date.today().strftime("%Y%m%d")
         images_and_audio_to_video(all_images, all_audios, MINECRAFT_VIDEO_PATH, f"slideshow_{today}.mp4")
+    pulse = udrCreate(Pulse)
+    udrRoute(pulse)
     endBatch()
 
 def images_and_audio_to_video(image_files, audio_files, minecraft_video_path, output_filename="slideshow_post_then_comment.mp4", speed_multiplier=1.2):
@@ -209,6 +218,138 @@ def get_today_files(base_dir="/opt/mz/Jai/RedditApp"):
                <string name="Classname" value="com.digitalroute.wfc.analysis.StuffyMapperInsp"/>
                <storable name="Data" storable-id="dr.StuffyMapperData" ver="10.0">
                   <string name="sourceCode"><![CDATA[consume {
+    udrRoute((Pulse)input);
+}]]></string>
+                  <array classname="com.digitalroute.devkit.drudr.DRTypeInfo" name="udrTypes" size="3">
+                     <storable name="0" storable-id="dr.DRTypeInfo" ver="1.0">
+                        <string name="TypeName" value="bytearray"/>
+                     </storable>
+                     <storable name="1" storable-id="dr.DRTypeInfo" ver="1.0">
+                        <string name="TypeName" value="DRUDR"/>
+                     </storable>
+                     <storable name="2" storable-id="dr.UltraClientInfo" ver="1.0">
+                        <string name="FormatName" value="SAPCM_PYTHON.UFL_Reddit"/>
+                        <string name="TypeName" value="SAPCM_PYTHON.UFL_Reddit.Pulse"/>
+                     </storable>
+                  </array>
+               </storable>
+            </storable>
+            <storable name="1" storable-id="dr.WfNodeConfig" ver="1.0">
+               <string name="Classname" value="com.digitalroute.devkit.hidden.DRThreadBufferInsp"/>
+               <storable name="Data" storable-id="dr.DRThreadBufferConfig" ver="10.0">
+                  <boolean name="printStats" value="false"/>
+                  <boolean name="useOwnThread" value="false"/>
+               </storable>
+            </storable>
+         </array>
+         <string name="Name" value="Analysis_2"/>
+      </storable>
+      <storable name="2" storable-id="dr.WfNode" ver="2.0">
+         <string name="Classname"><![CDATA[com.digitalroute.pythonagents.agent.PythonBatchProcessingAgentInsp]]></string>
+         <array classname="com.digitalroute.wf.WfNodeConfig" name="Configuration" size="1">
+            <storable name="0" storable-id="dr.WfNodeConfig" ver="1.0">
+               <string name="Classname"><![CDATA[com.digitalroute.pythonagents.agent.PythonBatchProcessingAgentInsp]]></string>
+               <storable name="Data" storable-id="dr.PythonAgentData" ver="10.0">
+                  <array classname="com.digitalroute.devkit.drudr.DRTypeInfo" name="inputTypes" size="2">
+                     <storable name="0" storable-id="dr.DRTypeInfo" ver="1.0">
+                        <string name="TypeName" value="bytearray"/>
+                     </storable>
+                     <storable name="1" storable-id="dr.DRTypeInfo" ver="1.0">
+                        <string name="TypeName" value="DRUDR"/>
+                     </storable>
+                  </array>
+                  <storable name="interpreter" null="true"/>
+                  <array name="mims" null="true"/>
+                  <array classname="com.digitalroute.pythonagents.OutputTypeInfo" name="outputTypes" size="2">
+                     <storable name="0" storable-id="dr.PythonOutputTypeInfo" ver="1.0">
+                        <string name="route" null="true"/>
+                        <storable name="udrTypeInfo" storable-id="dr.DRTypeInfo" ver="1.0">
+                           <string name="TypeName" value="bytearray"/>
+                        </storable>
+                     </storable>
+                     <storable name="1" storable-id="dr.PythonOutputTypeInfo" ver="1.0">
+                        <string name="route" null="true"/>
+                        <storable name="udrTypeInfo" storable-id="dr.DRTypeInfo" ver="1.0">
+                           <string name="TypeName" value="DRUDR"/>
+                        </storable>
+                     </storable>
+                  </array>
+                  <string name="sourceCode"><![CDATA[import os
+import datetime
+import pickle
+import google.auth.transport.requests
+from google_auth_oauthlib.flow import InstalledAppFlow
+from googleapiclient.discovery import build
+from googleapiclient.http import MediaFileUpload
+
+# Scopes for YouTube upload
+SCOPES = ["https://www.googleapis.com/auth/youtube.upload"]
+CLIENT_SECRET_FILE = "/opt/mz/Jai/RedditApp/client_secret.json"
+CREDENTIALS_PICKLE_FILE = "/opt/mz/Jai/RedditApp/youtube_credentials.pkl"
+
+def get_authenticated_service():
+    credentials = None
+    if os.path.exists(CREDENTIALS_PICKLE_FILE):
+        with open(CREDENTIALS_PICKLE_FILE, "rb") as token:
+            credentials = pickle.load(token)
+
+    if not credentials or not credentials.valid:
+        if credentials and credentials.expired and credentials.refresh_token:
+            credentials.refresh(google.auth.transport.requests.Request())
+        else:
+            flow = InstalledAppFlow.from_client_secrets_file(CLIENT_SECRET_FILE, SCOPES)
+            credentials = flow.run_local_server(port=0)
+
+        with open(CREDENTIALS_PICKLE_FILE, "wb") as token:
+            pickle.dump(credentials, token)
+
+    return build("youtube", "v3", credentials=credentials)
+
+def upload_video(file_path, title, description, category="22", privacy="unlisted"):
+    youtube = get_authenticated_service()
+
+    request_body = {
+        "snippet": {
+            "title": title,
+            "description": description,
+            "categoryId": category,  # 22 = People & Blogs
+        },
+        "status": {
+            "privacyStatus": privacy  # "public", "unlisted", or "private"
+        }
+    }
+
+    media = MediaFileUpload(file_path, chunksize=-1, resumable=True)
+
+    request = youtube.videos().insert(
+        part="snippet,status",
+        body=request_body,
+        media_body=media
+    )
+    response = request.execute()
+    print(f"✅ Upload successful! Video ID: {response['id']}")
+    return response["id"]
+
+
+
+def consume(input):
+    today = datetime.date.today().strftime("%Y%m%d")
+    video_path = f"/opt/mz/Jai/RedditApp/{today}/slideshow_{today}.mp4"
+    upload_video(video_path, f"The RedditShow {today}", f"Reddit Trends {today}", privacy="public")
+    pass
+]]></string>
+               </storable>
+            </storable>
+         </array>
+         <string name="Name" value="UploadSlideshow"/>
+      </storable>
+      <storable name="3" storable-id="dr.WfNode" ver="2.0">
+         <string name="Classname" value="com.digitalroute.wfc.analysis.StuffyMapperInsp"/>
+         <array classname="com.digitalroute.wf.WfNodeConfig" name="Configuration" size="2">
+            <storable name="0" storable-id="dr.WfNodeConfig" ver="1.0">
+               <string name="Classname" value="com.digitalroute.wfc.analysis.StuffyMapperInsp"/>
+               <storable name="Data" storable-id="dr.StuffyMapperData" ver="10.0">
+                  <string name="sourceCode"><![CDATA[consume {
 
 }]]></string>
                   <array classname="com.digitalroute.devkit.drudr.DRTypeInfo" name="udrTypes" size="2">
@@ -229,12 +370,20 @@ def get_today_files(base_dir="/opt/mz/Jai/RedditApp"):
                </storable>
             </storable>
          </array>
-         <string name="Name" value="Analysis_2"/>
+         <string name="Name" value="Analysis_1"/>
       </storable>
    </list>
    <list classname="java.util.ArrayList" name="Routes">
       <storable name="0" storable-id="dr.WfRoute" ver="2.0">
          <string name="Name" value="r_2"/>
+         <int name="Realtime mode" value="0"/>
+      </storable>
+      <storable name="1" storable-id="dr.WfRoute" ver="2.0">
+         <string name="Name" value="r_3"/>
+         <int name="Realtime mode" value="0"/>
+      </storable>
+      <storable name="2" storable-id="dr.WfRoute" ver="2.0">
+         <string name="Name" value="r_4"/>
          <int name="Realtime mode" value="0"/>
       </storable>
    </list>
