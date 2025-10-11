@@ -1,0 +1,41 @@
+ServerName,Powerstate,OperatingSystem,Cluster,Datastore,NumCPU,MemMb,DiskGb,DiskFree,DiskUsed,ProvisionedSpaceGB
+PCSWDS00116.cww.pep.pvt,PoweredOn,Microsoft Windows Server 2022 (64-bit),SDC_PWF_Std_Clust01,SDC-PWF-STD-001,4,8192,0,144.31,-144.31,188
+pcswis00162.pcms.pvt,PoweredOn,Microsoft Windows Server 2022 (64-bit),SDC_PWF_Std_Clust01,SDC-PWF-STD-001,2,12288,0,298.3,-298.3,348
+pcswis00163.pcms.pvt,PoweredOn,Microsoft Windows Server 2022 (64-bit),SDC_PWF_Std_Clust01,SDC-PWF-STD-003,2,12288,0,298.82,-298.82,348
+pcswis00164.pcms.pvt,PoweredOn,Microsoft Windows Server 2022 (64-bit),SDC_PWF_Std_Clust01,SDC-PWF-STD-001,2,12288,0,300.45,-300.45,348
+pcswis00165.pcms.pvt,PoweredOn,Microsoft Windows Server 2022 (64-bit),SDC_PWF_Std_Clust01,SDC-PWF-STD-001,2,12288,0,299.29,-299.29,348
+peplap07324.corp.pep.pvt,PoweredOn,SUSE Linux Enterprise 12 (64-bit),SDC_Gen_Std_Clust03,SDC-PowerMax-GP03-Silver-Tier2-00056,2,1024,0,41.29,-41.29,83
+peplap07893.pi.pvt,PoweredOn,SUSE Linux Enterprise 15 (64-bit),SDC_SAP_Std_Clust02,SDC-PowerMax-SAP02-AMESA-Tier2-DR-0004C,SDC-PowerMax-SAP02-AMESA-Tier1-DR-0004E,SDC-PowerMax-SAP02-AMESA-Tier1-DR-00053,8,16384,0,1506.03,-1506.03,5782
+peplap07925.pi.pvt,PoweredOn,SUSE Linux Enterprise 15 (64-bit),SDC_SAP_Std_Clust02,SDC-PowerMax-SAP02-AMESA-Tier2-DR-0004C,8,96256,0,244.75,-244.75,524
+peplap07926.pi.pvt,PoweredOn,SUSE Linux Enterprise 15 (64-bit),SDC_SAP_Std_Clust02,SDC-PowerMax-SAP02-AMESA-Tier1-DR-0004F,8,102400,0,200.23,-200.23,540
+peplap07927.pi.pvt,PoweredOn,SUSE Linux Enterprise 15 (64-bit),SDC_SAP_Std_Clust02,SDC-PowerMax-SAP02-AMESA-Tier1-DR-00053,8,102400,0,204.17,-204.17,480
+peplap07928.pi.pvt,PoweredOn,SUSE Linux Enterprise 15 (64-bit),SDC_SAP_Std_Clust02,SDC-PowerMax-SAP02-AMESA-Tier1-DR-0004F,8,102400,0,203.17,-203.17,480
+peplap08000.pi.pvt,PoweredOn,SUSE Linux Enterprise 15 (64-bit),SDC_SAP_Std_Clust02,SDC-PowerMax-SAP02-AMESA-Tier2-DR-0004C,4,40960,0,123.41,-123.41,446
+peplap08001.pi.pvt,PoweredOn,SUSE Linux Enterprise 15 (64-bit),SDC_SAP_Std_Clust02,SDC-PowerMax-SAP02-AMESA-Tier2-DR-0004D,4,40960,0,183.68,-183.68,512
+peplap08002.pi.pvt,PoweredOn,SUSE Linux Enterprise 15 (64-bit),SDC_SAP_Std_Clust02,SDC-PowerMax-SAP02-AMESA-Tier2-DR-0004D,4,40960,0,204.92,-204.92,640
+peplap09641.pi.pvt,PoweredOn,SUSE Linux Enterprise 15 (64-bit),SDC_SAP_Std_Clust02,SDC-PowerMax-SAP02-AMESA-Tier1-DR-0004F,8,65536,0,400.33,-400.33,644
+peplap09643.pi.pvt,PoweredOn,SUSE Linux Enterprise 15 (64-bit),SDC_SAP_Std_Clust02,SDC-PowerMax-SAP02-AMESA-Tier1-DR-00053,4,65536,0,411.93,-411.93,644
+peplap09823.pi.pvt,PoweredOn,Oracle Linux 8 (64-bit),SDC_ORA_OEL_Clust01,SDC-PowerMax-OEL01-APAC-Tier1-DR-00041,SDC-PowerMax-OEL01-APAC-Tier1-DR-00042,SDC-PowerMax-OEL01-APAC-Tier1-DR-00045,SDC-PowerMax-OEL01-APAC-Tier1-DR-00047,10,67584,0,117.16,-117.16,336
+peplap09824.pi.pvt,PoweredOn,Oracle Linux 8 (64-bit),SDC_ORA_OEL_Clust01,SDC-PowerMax-OEL01-APAC-Tier1-DR-00042,SDC-PowerMax-OEL01-APAC-Tier1-DR-00047,10,67584,0,212.43,-212.43,436
+peplap09825.pi.pvt,PoweredOn,Oracle Linux 8 (64-bit),SDC_ORA_OEL_Clust01,SDC-PowerMax-OEL01-APAC-Tier1-DR-00045,SDC-PowerMax-OEL01-APAC-Tier1-DR-00047,10,67584,0,111.32,-111.32,336
+peplap09826.pi.pvt,PoweredOn,Oracle Linux 8 (64-bit),SDC_ORA_OEL_Clust01,SDC-PowerMax-OEL01-APAC-Tier1-DR-00042,SDC-PowerMax-OEL01-APAC-Tier1-DR-00046,SDC-PowerMax-OEL01-APAC-Tier1-DR-00047,10,67584,0,116.19,-116.19,336
+peplap09881.pi.pvt,PoweredOn,Oracle Linux 8 (64-bit),SDC_ORA_OEL_Clust01,SDC-PowerMax-OEL01-APAC-Tier1-DR-00041,SDC-PowerMax-OEL01-APAC-Tier1-DR-00046,SDC-PowerMax-OEL01-APAC-Tier1-DR-00047,8,43008,0,126.43,-126.43,312
+peplap09883.pi.pvt,PoweredOn,Oracle Linux 8 (64-bit),SDC_ORA_OEL_Clust01,SDC-PowerMax-OEL01-APAC-Tier1-DR-00041,SDC-PowerMax-OEL01-APAC-Tier1-DR-00047,10,67584,0,114.9,-114.9,340
+peplap09934.pi.pvt,PoweredOn,Oracle Linux 8 (64-bit),SDC_ORA_OEL_Clust01,SDC-PowerMax-OEL01-APAC-Tier1-DR-00041,SDC-PowerMax-OEL01-APAC-Tier1-DR-00044,SDC-PowerMax-OEL01-APAC-Tier1-DR-00045,4,32768,0,224.59,-224.59,487
+peplap09935.pi.pvt,PoweredOn,Oracle Linux 8 (64-bit),SDC_ORA_OEL_Clust01,SDC-PowerMax-OEL01-APAC-Tier1-DR-00041,SDC-PowerMax-OEL01-APAC-Tier1-DR-00046,4,32768,0,107.24,-107.24,287
+peplap09936.pi.pvt,PoweredOn,Oracle Linux 8 (64-bit),SDC_ORA_OEL_Clust01,SDC-PowerMax-OEL01-APAC-Tier1-DR-00041,SDC-PowerMax-OEL01-APAC-Tier1-DR-00046,4,32768,0,106.9,-106.9,287
+peplap09937.pi.pvt,PoweredOn,Oracle Linux 8 (64-bit),SDC_ORA_OEL_Clust01,SDC-PowerMax-OEL01-APAC-Tier1-DR-0003F,4,32768,0,145.81,-145.81,337
+peplap09939.pi.pvt,PoweredOn,Oracle Linux 8 (64-bit),SDC_ORA_OEL_Clust01,SDC-PowerMax-OEL01-APAC-Tier1-DR-00042,SDC-PowerMax-OEL01-APAC-Tier1-DR-00045,SDC-PowerMax-OEL01-APAC-Tier1-DR-00047,4,32768,0,166.37,-166.37,337
+peplap10007.pi.pvt,PoweredOn,Oracle Linux 8 (64-bit),SDC_ORA_OEL_Clust01,SDC-PowerMax-OEL01-APAC-Tier1-DR-00045,SDC-PowerMax-OEL01-APAC-Tier1-DR-00047,18,65536,0,139.38,-139.38,348
+peplap10008.pi.pvt,PoweredOn,Oracle Linux 8 (64-bit),SDC_ORA_OEL_Clust01,SDC-PowerMax-OEL01-APAC-Tier1-DR-0003F,12,49152,0,154.28,-154.28,328
+peplap10064.pi.pvt,PoweredOn,Oracle Linux 8 (64-bit),SDC_ORA_OEL_Clust01,SDC-PowerMax-OEL01-APAC-Tier1-DR-00042,SDC-PowerMax-OEL01-APAC-Tier1-DR-00044,SDC-PowerMax-OEL01-APAC-Tier1-DR-00047,8,76800,0,132.9,-132.9,405
+peplap10065.pi.pvt,PoweredOn,Oracle Linux 8 (64-bit),SDC_ORA_OEL_Clust01,SDC-PowerMax-OEL01-APAC-Tier1-DR-00044,SDC-PowerMax-OEL01-APAC-Tier1-DR-00045,SDC-PowerMax-OEL01-APAC-Tier1-DR-00047,8,76800,0,159.58,-159.58,409
+peplap10066.pi.pvt,PoweredOn,SUSE Linux Enterprise 15 (64-bit),SDC_SAP_Std_Clust02,SDC-PowerMax-SAP02-AMESA-Tier1-DR-0004E,2,22528,0,159.37,-159.37,286
+peplap10069.pi.pvt,PoweredOn,SUSE Linux Enterprise 15 (64-bit),SDC_SAP_Std_Clust02,SDC-PowerMax-SAP02-AMESA-Tier1-DR-0004E,2,22528,0,159.13,-159.13,285
+peplap10347.pi.pvt,PoweredOn,SUSE Linux Enterprise 15 (64-bit),SDC_SAP_Std_Clust02,SDC-PowerMax-SAP02-AMESA-Tier1-DR-0004E,4,16384,0,80,-80,150
+peplap10348.pi.pvt,PoweredOn,SUSE Linux Enterprise 15 (64-bit),SDC_SAP_Std_Clust02,SDC-PowerMax-SAP02-AMESA-Tier2-DR-0004C,4,16384,0,80.9,-80.9,150
+peplap10390.pi.pvt,PoweredOn,SUSE Linux Enterprise 12 (64-bit),SDC_Gen_Std_Clust03,SDC-PowerMax-GP03-Silver-Tier2-0005A,8,16384,0,520.78,-520.78,616
+PEPLAP10393.pi.pvt,PoweredOn,SUSE Linux Enterprise 12 (64-bit),SDC_Gen_Std_Clust03,SDC-PowerMax-GP03-Silver-Tier2-00058,4,16384,0,518.53,-518.53,616
+peplap10394.pi.pvt,PoweredOn,SUSE Linux Enterprise 12 (64-bit),SDC_Gen_Std_Clust03,SDC-PowerMax-GP03-Silver-Tier2-0005F,8,16384,0,519.31,-519.31,616
+peplap10404.pi.pvt,PoweredOn,SUSE Linux Enterprise 12 (64-bit),SDC_Gen_Std_Clust03,SDC-PowerMax-GP03-Silver-Tier2-00048,8,16384,0,519.07,-519.07,616
+peplap10694.pi.pvt,PoweredOn,Oracle Linux 8 (64-bit),SDC_ORA_OEL_Clust01,SDC-PowerMax-OEL01-APAC-Tier1-DR-00045,SDC-PowerMax-OEL01-APAC-Tier1-DR-00047,10,67584,0,146.69,-146.69,336
